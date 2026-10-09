@@ -1,0 +1,248 @@
+:root {
+    --ink: #1c1915;
+    --muted: #6d645b;
+    --paper: #f3eee4;
+    --card: #fffdf8;
+    --line: #e3d9c8;
+    --accent: #0f6e56;
+    --accent-dark: #0b5344;
+    --danger: #9f2d2d;
+    --danger-bg: #fde8e8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background: #d8d2c6;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+button,
+input,
+textarea {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.7rem 1.2rem;
+    color: #fff;
+    background: var(--accent);
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--accent-dark);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+label {
+    display: block;
+    margin: 1rem 0 0.35rem;
+    font-size: 0.95rem;
+}
+
+input,
+textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    color: var(--ink);
+    background: #fff;
+}
+
+.error {
+    margin: 1rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+.login {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 1.5rem;
+}
+
+.card {
+    width: 100%;
+    max-width: 26rem;
+    padding: 2rem;
+    border: 1px solid var(--line);
+    border-radius: 1.25rem;
+    background: var(--card);
+}
+
+.card h1 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.lead {
+    margin: 0.35rem 0 0;
+    color: var(--muted);
+}
+
+.card button {
+    width: 100%;
+    margin-top: 1.25rem;
+}
+
+.switch {
+    margin: 1rem 0 0;
+    color: var(--muted);
+    text-align: center;
+}
+
+.switch a {
+    color: var(--accent-dark);
+}
+
+.chat {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 26rem;
+    height: 100vh;
+    margin: 0 auto;
+    background: #efeae2;
+    box-shadow: 0 0 0 1px var(--line);
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    background: #f0f2f5;
+}
+
+.chat-header h1 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.chat-header p {
+    margin: 0.1rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.75rem 0.7rem;
+    list-style: none;
+}
+
+.message {
+    width: fit-content;
+    max-width: 85%;
+    margin: 0 0 0.3rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.5rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+}
+
+.message-user {
+    margin-left: auto;
+    color: var(--ink);
+    background: #d9fdd3;
+}
+
+.message-bot {
+    margin-right: auto;
+    background: #fff;
+}
+
+.message-typing {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    min-width: 3rem;
+    min-height: 1.7rem;
+}
+
+.message-typing span {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #8a847c;
+    animation: typing 1.2s infinite;
+}
+
+.message-typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.message-typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.conversation-ended {
+    margin: 0.55rem 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-align: center;
+    list-style: none;
+}
+
+@keyframes typing {
+    0%,
+    80%,
+    100% {
+        opacity: 0.25;
+        transform: translateY(0);
+    }
+
+    40% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+}
+
+.composer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem;
+    align-items: end;
+    padding: 0.5rem 0.55rem 0.6rem;
+    background: #f0f2f5;
+}
+
+.composer label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.composer .error {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+    .composer {
+        grid-template-columns: 1fr;
+    }
+}
