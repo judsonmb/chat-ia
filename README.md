@@ -1,82 +1,82 @@
 # Chat IA
 
-Chat para coletar dados de contato conversando com um modelo de linguagem. A pessoa fala em texto corrido. O modelo pergunta o que falta, consulta o CEP e grava nome, CPF, endereço, e-mail e telefone.
+A chat that collects contact details by talking to a language model. The person writes in plain sentences. The model asks for whatever is still missing, looks up the postal code, and stores the name, CPF, address, email, and phone number.
 
-O projeto usa os conceitos de uma aplicação com IA generativa: prompt de sistema, histórico da conversa e ferramentas que o modelo chama para agir no sistema.
+The project uses the building blocks of a generative-AI application: a system prompt, the conversation history, and tools the model calls when it needs to act on the system.
 
-## O que a IA faz aqui
+## What the AI does here
 
-O modelo não grava nada sozinho. Cada mensagem passa por três peças:
+The model does not write to the database by itself. Every message goes through three pieces:
 
-1. **Prompt de sistema.** Define o papel do assistente: coletar os dados com educação, a ordem das perguntas e as regras de nome, CPF, endereço e encerramento. O prompt também recebe os campos que já estão salvos, para o modelo não pedir de novo.
-2. **Histórico.** As mensagens da conversa aberta vão junto no pedido, na ordem em que aconteceram. Assim a resposta seguinte continua o assunto em vez de começar do zero.
-3. **Ferramentas (tools).** Funções PHP que o modelo pode chamar quando a pessoa informa um dado. Validar o CPF, consultar o ViaCEP e gravar o telefone são tools. O modelo decide quando chamar. O PHP é quem valida e persiste.
+1. **System prompt.** Sets the assistant's role: collect the data politely, follow the question order, and apply the rules for names, CPF, address, and closing. The prompt also receives the fields already saved, so the model does not ask for them again.
+2. **History.** Messages from the open conversation are sent with the request, in the order they happened. The next reply continues the thread instead of starting over.
+3. **Tools.** PHP functions the model can call when the person provides a value. Validating a CPF, querying ViaCEP, and storing a phone number are tools. The model decides when to call one. PHP validates and persists.
 
-Uma resposta pode usar até três passos. Isso cabe, no mesmo turno, gravar um campo, encerrar a conversa e escrever a resposta.
+One reply can take up to three steps. That is enough, in a single turn, to save a field, close the conversation, and write the answer.
 
-O modelo usado por padrão é o `gpt-4o-mini`, via [Prism](https://github.com/prism-php/prism) e a API da OpenAI. O histórico, o prompt e as tools são montados pela aplicação. O cliente do modelo só recebe esses três arrays prontos.
+The default model is `gpt-4o-mini`, through [Prism](https://github.com/prism-php/prism) and the OpenAI API. The application builds the history, the prompt, and the tools. The model client only receives those three ready-made arrays.
 
-## O que é coletado
+## What is collected
 
-| Dado | Obrigatório para encerrar |
+| Field | Required to close |
 | --- | --- |
-| Nome e sobrenome | Sim |
-| CPF | Sim |
-| Telefone com DDD | Sim |
-| CEP, rua, número, bairro, cidade, estado e país | Sim |
-| Complemento | Não |
-| E-mail | Não |
+| First name and last name | Yes |
+| CPF | Yes |
+| Phone number with area code | Yes |
+| Postal code, street, number, neighborhood, city, state, and country | Yes |
+| Address line 2 (complement) | No |
+| Email | No |
 
-O endereço começa pelo CEP. O [ViaCEP](https://viacep.com.br) preenche rua, bairro, cidade, estado e país. Número e complemento ficam com a pessoa. Se ela não quiser informar o complemento ou o e-mail, a conversa segue.
+The address starts with the postal code. [ViaCEP](https://viacep.com.br) fills in the street, neighborhood, city, state, and country. The building number and the complement stay with the person. If they decline the complement or the email, the conversation continues.
 
-Se a pessoa encerrar sem os dados obrigatórios, o contato é excluído com soft delete e a conversa fica fechada. Com tudo obrigatório preenchido, o contato permanece e a conversa também fecha. A próxima mensagem abre uma conversa nova.
+If the person closes before the required fields are filled, the contact is soft-deleted and the conversation is closed. When every required field is present, the contact is kept and the conversation is closed. The next message starts a new conversation.
 
-## Páginas
+## Pages
 
-| Endereço | O que mostra |
+| URL | What it shows |
 | --- | --- |
-| `/` e `/login` | Entrar |
-| `/register` | Criar conta |
-| `/chat` | Conversa |
+| `/` and `/login` | Sign in |
+| `/register` | Create an account |
+| `/chat` | The conversation |
 
-O navegador guarda o token do Passport em `localStorage`. Ao abrir o chat, a página carrega as conversas da conta. Uma conversa fechada aparece com a linha **Conversa encerrada**.
+The browser stores the Passport token in `localStorage`. Opening the chat loads that account's conversations. A closed conversation shows the line **Conversa encerrada**.
 
 ## API
 
-Todas as rotas ficam em `/api`. As protegidas usam `Authorization: Bearer {token}`.
+Every route lives under `/api`. Protected routes use `Authorization: Bearer {token}`.
 
-| Método | Rota | Auth | O que faz |
+| Method | Route | Auth | What it does |
 | --- | --- | --- | --- |
-| `POST` | `/api/register` | Não | Cria a conta e devolve o token |
-| `POST` | `/api/login` | Não | Entra e devolve o token |
-| `GET` | `/api/user` | Sim | Devolve o usuário autenticado |
-| `GET` | `/api/chats` | Sim | Lista as conversas e as mensagens da conta |
-| `POST` | `/api/chat` | Sim | Envia uma mensagem e devolve a resposta. O JSON traz `message` e `status` (`open` ou `closed`) |
+| `POST` | `/api/register` | No | Creates the account and returns a token |
+| `POST` | `/api/login` | No | Signs in and returns a token |
+| `GET` | `/api/user` | Yes | Returns the authenticated user |
+| `GET` | `/api/chats` | Yes | Lists the account's conversations and messages |
+| `POST` | `/api/chat` | Yes | Sends a message and returns the reply. The JSON includes `message` and `status` (`open` or `closed`) |
 
-O cadastro pede nome, e-mail e senha. A senha tem no mínimo 8 caracteres e precisa da confirmação. Login e cadastro aceitam 5 tentativas por minuto.
+Registration asks for a name, an email, and a password. The password must be at least 8 characters and must be confirmed. Sign-in and registration allow 5 attempts per minute.
 
-## Ferramentas do modelo
+## Model tools
 
-| Tool | Quando entra |
+| Tool | When it runs |
 | --- | --- |
-| `saveName` | Nome e sobrenome |
-| `saveCpf` | CPF, com ou sem pontos e traços |
-| `lookupZipcode` | CEP. Consulta o ViaCEP e grava o que a consulta devolver, menos número e complemento |
-| `saveAddress` | Número, complemento e o que o CEP não trouxe |
-| `saveEmail` | E-mail, ou a recusa de informar |
-| `savePhone` | Telefone com DDD, 10 ou 11 dígitos |
-| `closeChat` | Encerra a conversa |
+| `saveName` | First name and last name |
+| `saveCpf` | CPF, with or without dots and dashes |
+| `lookupZipcode` | Postal code. Queries ViaCEP and stores everything the lookup returns, except the building number and the complement |
+| `saveAddress` | Building number, complement, and anything the postal code did not return |
+| `saveEmail` | Email, or a refusal to provide one |
+| `savePhone` | Phone number with area code, 10 or 11 digits |
+| `closeChat` | Closes the conversation |
 
-## Requisitos
+## Requirements
 
-- PHP 8.3 ou superior
+- PHP 8.3 or newer
 - Composer
-- Uma chave da [OpenAI](https://platform.openai.com/api-keys)
-- SQLite, ou MySQL se preferir
+- An [OpenAI](https://platform.openai.com/api-keys) API key
+- SQLite, or MySQL if you prefer
 
-Node não é necessário para as páginas. O HTML, o CSS e o JavaScript ficam em `resources/views` e `public`.
+Node is not required for the pages. The HTML, CSS, and JavaScript live in `resources/views` and `public`.
 
-## Configuração
+## Setup
 
 ```bash
 composer install
@@ -84,16 +84,22 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-No `.env`, preencha a chave e, se quiser, o modelo:
+In `.env`, set the key and, if you want, the model:
 
 ```dotenv
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
 ```
 
-`OPENAI_MODEL` já vem como `gpt-4o-mini`. `OPENAI_ORGANIZATION`, `OPENAI_PROJECT` e `OPENAI_URL` só entram se a conta da OpenAI exigir. Estão comentadas no `.env.example`.
+`OPENAI_MODEL` already defaults to `gpt-4o-mini`. Set `OPENAI_ORGANIZATION`, `OPENAI_PROJECT`, and `OPENAI_URL` only if the OpenAI account requires them. They are commented out in `.env.example`.
 
-O exemplo usa SQLite, que não pede servidor. Para MySQL, troque o bloco `DB_*` no `.env`:
+The example uses SQLite, which needs no database server. `DB_CONNECTION=sqlite` with no path points Laravel at `database/database.sqlite`. Create that file if it does not exist:
+
+```bash
+touch database/database.sqlite
+```
+
+For MySQL, replace the `DB_*` block in `.env` and create the database before migrating:
 
 ```dotenv
 DB_CONNECTION=mysql
@@ -104,13 +110,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Crie o banco antes de migrar. No SQLite, o arquivo é criado na migração se `DB_DATABASE` apontar para `database/database.sqlite` e o arquivo existir. O `.env.example` usa `DB_CONNECTION=sqlite` sem caminho, que no Laravel aponta para `database/database.sqlite`. Crie o arquivo se ele não existir:
-
-```bash
-touch database/database.sqlite
-```
-
-Depois prepare o banco e o Passport. O login emite personal access token, então o cliente pessoal precisa existir.
+Then prepare the database and Passport. Sign-in issues a personal access token, so the personal access client has to exist.
 
 ```bash
 php artisan migrate
@@ -119,28 +119,28 @@ php artisan passport:client --personal --name="Chat IA" --provider=users
 php artisan serve
 ```
 
-Abra `http://localhost:8000`, crie uma conta e comece a conversa.
+Open `http://localhost:8000`, create an account, and start the conversation.
 
-As chaves do Passport ficam em `storage/oauth-private.key` e `storage/oauth-public.key`. Elas não vão para o Git. Se preferir variável de ambiente, o Passport também lê `PASSPORT_PRIVATE_KEY` e `PASSPORT_PUBLIC_KEY`.
+Passport keys are written to `storage/oauth-private.key` and `storage/oauth-public.key`. They are not committed. If you prefer environment variables, Passport also reads `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY`.
 
-## Testes
+## Tests
 
-Os testes de ponta usam SQLite em memória e não chamam a OpenAI. A resposta do modelo é substituída por um fake do Prism.
+The endpoint tests use SQLite in memory and do not call OpenAI. The model reply is replaced with a Prism fake.
 
 ```bash
 php artisan test
 ```
 
-## Estrutura
+## Layout
 
 ```text
-app/Actions/Auth          Login e cadastro
-app/Actions/Chat          Envio da mensagem
-app/Prompts               Prompt de sistema da coleta
-app/Services              Histórico, tools e chamada ao Prism
-app/Tools                 Funções que o modelo pode chamar
-resources/views           Login, cadastro e chat
-public/css e public/js    Estilo e comportamento das páginas
+app/Actions/Auth          Sign-in and registration
+app/Actions/Chat          Sending a message
+app/Prompts               System prompt for the collection
+app/Services              History, tools, and the Prism call
+app/Tools                 Functions the model can call
+resources/views           Sign-in, registration, and chat
+public/css and public/js  Page style and behavior
 ```
 
-`SendMessage` abre ou reaproveita a conversa aberta da pessoa, grava a mensagem, pede o texto ao modelo e grava a resposta. `AIAgentService` monta o histórico e a lista de tools. `PrismService` só envia o que já veio pronto.
+`SendMessage` opens or reuses the person's open conversation, stores the message, asks the model for the text, and stores the reply. `AIAgentService` builds the history and the tool list. `PrismService` only sends what it was already given.
