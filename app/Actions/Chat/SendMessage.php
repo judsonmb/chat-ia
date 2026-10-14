@@ -38,12 +38,11 @@ class SendMessage
         ]);
 
         $messages = $chat->messages()->orderBy('id')->get();
+        $contact = Contact::query()->where('chat_id', $chat->id)->first();
 
         $reply = $this->prismService->text(
             $this->aiAgentService->makeChatHistory($messages),
-            $this->contactCollectorPrompt->text(
-                Contact::query()->where('chat_id', $chat->id)->first(),
-            ),
+            $this->contactCollectorPrompt->text($contact).$this->aiAgentService->makeRAG($message),
             $this->aiAgentService->makeChatTools($chat->id),
         );
 

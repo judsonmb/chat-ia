@@ -85,6 +85,29 @@ class SendMessageTest extends TestCase
         });
     }
 
+    public function test_it_adds_the_matching_knowledge_excerpt_to_the_system_prompt(): void
+    {
+        $user = User::factory()->create();
+        $fake = Prism::fake([
+            TextResponseFake::make()
+                ->withText('O CPF usa dois dígitos verificadores.')
+                ->withUsage(new Usage(10, 20)),
+        ]);
+
+        Passport::actingAs($user);
+
+        $this->postJson('/api/chat', [
+            'message' => 'Como funciona a validação do CPF?',
+        ])->assertCreated();
+
+        $fake->assertRequest(function (array $requests): void {
+            $prompt = $requests[0]->systemPrompts()[0]->content;
+
+            $this->assertStringContainsString('dígitos verificadores', $prompt);
+            $this->assertStringNotContainsString('viacep.com.br', $prompt);
+        });
+    }
+
     public function test_it_returns_closed_when_the_chat_is_closed_during_the_turn(): void
     {
         $user = User::factory()->create();
