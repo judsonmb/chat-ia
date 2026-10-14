@@ -42,7 +42,7 @@ class SendMessage
 
         $reply = $this->prismService->text(
             $this->aiAgentService->makeChatHistory($messages),
-            $this->contactCollectorPrompt->text($contact).$this->aiAgentService->makeRAG($message),
+            $this->contactCollectorPrompt->text($contact).$this->aiAgentService->makeRAG(),
             $this->aiAgentService->makeChatTools($chat->id),
         );
 

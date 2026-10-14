@@ -8,6 +8,7 @@ use App\Models\ChatMessage;
 use App\Models\Contact;
 use App\Models\User;
 use App\Prompts\ContactCollectorPrompt;
+use App\Services\AIAgentService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Passport\Passport;
@@ -68,7 +69,7 @@ class SendMessageTest extends TestCase
 
             $this->assertCount(1, $systemPrompts);
             $this->assertInstanceOf(SystemMessage::class, $systemPrompts[0]);
-            $this->assertSame(app(ContactCollectorPrompt::class)->text(), $systemPrompts[0]->content);
+            $this->assertSame(app(ContactCollectorPrompt::class)->text().app(AIAgentService::class)->makeRAG(), $systemPrompts[0]->content);
 
             $messages = $requests[0]->messages();
 
@@ -85,7 +86,7 @@ class SendMessageTest extends TestCase
         });
     }
 
-    public function test_it_adds_the_matching_knowledge_excerpt_to_the_system_prompt(): void
+    public function test_it_adds_every_knowledge_file_to_the_system_prompt(): void
     {
         $user = User::factory()->create();
         $fake = Prism::fake([
@@ -103,8 +104,10 @@ class SendMessageTest extends TestCase
         $fake->assertRequest(function (array $requests): void {
             $prompt = $requests[0]->systemPrompts()[0]->content;
 
+            $this->assertStringContainsString('=== CONHECIMENTO PRÉVIO ===', $prompt);
             $this->assertStringContainsString('dígitos verificadores', $prompt);
-            $this->assertStringNotContainsString('viacep.com.br', $prompt);
+            $this->assertStringContainsString('viacep.com.br', $prompt);
+            $this->assertStringContainsString('Campos obrigatórios que ficaram para trás voltam uma única vez', $prompt);
         });
     }
 
