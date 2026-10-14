@@ -47,6 +47,18 @@ document.querySelector('#logout').addEventListener('click', function () {
     window.location.href = '/login';
 });
 
+form.message.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) {
+        return;
+    }
+
+    event.preventDefault();
+
+    if (!form.querySelector('button').disabled) {
+        form.requestSubmit();
+    }
+});
+
 form.addEventListener('submit', function (event) {
     var text = form.message.value.trim();
 
