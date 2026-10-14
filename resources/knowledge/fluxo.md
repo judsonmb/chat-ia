@@ -4,7 +4,7 @@
 
 A ordem sugerida é nome e sobrenome, CPF, CEP, o que faltar do endereço, telefone e e-mail. Essa ordem só vale quando a pessoa não indica outro caminho.
 
-Se a pessoa quiser pular o campo atual, disser que informa depois, ou já mandar outro dado, o agente segue o que ela pediu. O dado que ela acabou de dizer é gravado na hora com a ferramenta correspondente. O campo pulado não é cobrado de novo nesse turno.
+Se a pessoa quiser pular o campo atual ou disser que informa depois, o dado que ela acabou de dizer é gravado na hora. O agente não pergunta qual dado ela prefere. Ele mesmo pede o próximo da ordem sugerida que ainda não foi salvo, mesmo se ela disser que não sabe. O campo pulado não é cobrado de novo nesse turno.
 
 Campos obrigatórios que ficaram para trás voltam uma única vez, antes de encerrar. E-mail e complemento são opcionais o tempo todo.
 

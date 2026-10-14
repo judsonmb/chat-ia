@@ -368,7 +368,7 @@ class SendMessageTest extends TestCase
             $result = $lookup->handle(zipcode: '01001-000');
 
             $this->assertSame(
-                'CEP consultado. Já salvos, não pergunte de novo: rua Praça da Sé, cidade São Paulo, estado SP, país Brasil. Pergunte somente o que falta: número, complemento, bairro. O complemento é opcional. Se a pessoa não quiser informar, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.',
+                'CEP consultado. Já salvos, não pergunte de novo: rua Praça da Sé, cidade São Paulo, estado SP, país Brasil. Pergunte somente o que falta: número, complemento, bairro. Ao pedir o número, nomeie o complemento e diga que ele é opcional: a pessoa pode informar ou seguir sem ele. Se a pessoa não quiser informar o complemento, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.',
                 $result,
             );
 
@@ -432,7 +432,7 @@ class SendMessageTest extends TestCase
             $lookup = collect($requests[0]->tools())->first(fn ($tool) => $tool->name() === 'lookupZipcode');
 
             $this->assertSame(
-                'CEP consultado. Já salvos, não pergunte de novo: rua Praça da Sé, bairro Sé, cidade São Paulo, estado SP, país Brasil. Pergunte somente o que falta: número, complemento. O complemento é opcional. Se a pessoa não quiser informar, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.',
+                'CEP consultado. Já salvos, não pergunte de novo: rua Praça da Sé, bairro Sé, cidade São Paulo, estado SP, país Brasil. Pergunte somente o que falta: número, complemento. Ao pedir o número, nomeie o complemento e diga que ele é opcional: a pessoa pode informar ou seguir sem ele. Se a pessoa não quiser informar o complemento, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.',
                 $lookup->handle(zipcode: '01001000'),
             );
 

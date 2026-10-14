@@ -102,7 +102,11 @@ class LookupZipcode
             return $text.' Não pergunte mais dados de endereço.';
         }
 
-        return $text.' Pergunte somente o que falta: '.$missing->join(', ').'. O complemento é opcional. Se a pessoa não quiser informar, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.';
+        $complement = $missing->contains('complemento')
+            ? ' Ao pedir o número, nomeie o complemento e diga que ele é opcional: a pessoa pode informar ou seguir sem ele.'
+            : '';
+
+        return $text.' Pergunte somente o que falta: '.$missing->join(', ').'.'.$complement.' Se a pessoa não quiser informar o complemento, use saveAddress com complement_declined verdadeiro e não invente um valor. Quando a pessoa responder, use saveAddress só com o que ela disse.';
     }
 
     private function filled(mixed $value): ?string

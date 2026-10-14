@@ -10,7 +10,7 @@ Os dois últimos números são dígitos verificadores. Para cada um, soma-se cad
 
 O CEP precisa ter 8 dígitos, com ou sem hífen. A busca chama o ViaCEP em https://viacep.com.br/ws/{cep}/json/, com 3 segundos para conectar, 5 segundos de resposta e até 2 novas tentativas em falha de rede, erro 5xx ou 429.
 
-A resposta preenche rua (logradouro), bairro, cidade (localidade), estado (uf) e país Brasil. Número e complemento não vêm dessa busca: o número a pessoa informa, e o complemento é opcional. CEP inexistente, com o campo erro, não grava endereço. O que a consulta não trouxe é o único pedaço perguntado depois.
+A resposta preenche rua (logradouro), bairro, cidade (localidade), estado (uf) e país Brasil. Número e complemento não vêm dessa busca. O número é pedido em voz alta junto com o complemento. O complemento é opcional, mas precisa ser nomeado para a pessoa saber que pode informar, como um apartamento, ou seguir sem ele. CEP inexistente, com o campo erro, não grava endereço. O que a consulta não trouxe é o único pedaço perguntado depois.
 
 ## Nome, telefone e e-mail
 
