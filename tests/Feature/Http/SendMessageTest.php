@@ -9,9 +9,11 @@ use App\Models\Contact;
 use App\Models\User;
 use App\Prompts\ContactCollectorPrompt;
 use App\Services\AIAgentService;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Passport\Passport;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\TextResponseFake;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
@@ -39,7 +41,7 @@ class SendMessageTest extends TestCase
             'message' => 'Hello from the user',
         ])
             ->assertCreated()
-            ->assertJsonPath('message', 'Hello from Prism')
+            ->assertJsonPath('message', app(ContactCollectorPrompt::class)->greeting()."\n\n".'Hello from Prism')
             ->assertJsonPath('status', 'open');
 
         $this->assertDatabaseHas('chats', [
@@ -57,7 +59,7 @@ class SendMessageTest extends TestCase
 
         $this->assertDatabaseHas('chat_messages', [
             'chat_id' => $chatId,
-            'message' => 'Hello from Prism',
+            'message' => app(ContactCollectorPrompt::class)->greeting()."\n\n".'Hello from Prism',
             'sender' => 'bot',
         ]);
 
@@ -69,7 +71,7 @@ class SendMessageTest extends TestCase
 
             $this->assertCount(1, $systemPrompts);
             $this->assertInstanceOf(SystemMessage::class, $systemPrompts[0]);
-            $this->assertSame(app(ContactCollectorPrompt::class)->text().app(AIAgentService::class)->makeRAG(), $systemPrompts[0]->content);
+            $this->assertSame(app(ContactCollectorPrompt::class)->text(isFirstReply: true).app(AIAgentService::class)->makeRAG(), $systemPrompts[0]->content);
 
             $messages = $requests[0]->messages();
 
@@ -111,6 +113,43 @@ class SendMessageTest extends TestCase
         });
     }
 
+    #[DataProvider('greetingsByUtcTime')]
+    public function test_it_starts_the_first_reply_with_a_greeting_for_the_current_time_in_brasilia(string $utcTime, string $expected): void
+    {
+        $this->travelTo(CarbonImmutable::parse($utcTime, 'UTC'));
+
+        $user = User::factory()->create();
+        $fake = Prism::fake([
+            TextResponseFake::make()
+                ->withText('Olá!')
+                ->withUsage(new Usage(10, 20)),
+        ]);
+
+        Passport::actingAs($user);
+
+        $this->postJson('/api/chat', [
+            'message' => 'oi',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('message', $expected.' Eu sou o assistente virtual de cadastro. Vou pedir alguns dados de contato: nome, CPF, endereço, telefone e, se você quiser, e-mail. Pode tirar dúvidas sobre a coleta a qualquer momento.'."\n\nOlá!");
+
+        $fake->assertRequest(function (array $requests): void {
+            $this->assertStringContainsString('Não cumprimente nem se apresente.', $requests[0]->systemPrompts()[0]->content);
+        });
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function greetingsByUtcTime(): array
+    {
+        return [
+            'morning' => ['2026-10-14 12:00:00', 'Bom dia!'],
+            'afternoon' => ['2026-10-14 19:51:00', 'Boa tarde!'],
+            'night' => ['2026-10-15 02:00:00', 'Boa noite!'],
+        ];
+    }
+
     public function test_it_returns_closed_when_the_chat_is_closed_during_the_turn(): void
     {
         $user = User::factory()->create();
@@ -132,7 +171,7 @@ class SendMessageTest extends TestCase
             'message' => 'Pode encerrar',
         ])
             ->assertCreated()
-            ->assertJsonPath('message', 'A conversa foi encerrada.')
+            ->assertJsonPath('message', app(ContactCollectorPrompt::class)->greeting()."\n\n".'A conversa foi encerrada.')
             ->assertJsonPath('status', 'closed');
     }
 
@@ -169,6 +208,9 @@ class SendMessageTest extends TestCase
 
         $fake->assertRequest(function (array $requests): void {
             $messages = $requests[0]->messages();
+
+            $this->assertStringContainsString('Você já se apresentou nesta conversa.', $requests[0]->systemPrompts()[0]->content);
+            $this->assertStringNotContainsString('Esta é a sua primeira resposta', $requests[0]->systemPrompts()[0]->content);
 
             $this->assertCount(3, $messages);
             $this->assertInstanceOf(UserMessage::class, $messages[0]);
@@ -233,7 +275,7 @@ class SendMessageTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('chat_messages', [
-            'message' => 'Hello from Prism',
+            'message' => app(ContactCollectorPrompt::class)->greeting()."\n\n".'Hello from Prism',
             'sender' => 'bot',
         ]);
     }

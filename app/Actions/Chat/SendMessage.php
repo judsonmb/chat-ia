@@ -39,12 +39,17 @@ class SendMessage
 
         $messages = $chat->messages()->orderBy('id')->get();
         $contact = Contact::query()->where('chat_id', $chat->id)->first();
+        $isFirstReply = $messages->doesntContain('sender', 'bot');
 
         $reply = $this->prismService->text(
             $this->aiAgentService->makeChatHistory($messages),
-            $this->contactCollectorPrompt->text($contact).$this->aiAgentService->makeRAG(),
+            $this->contactCollectorPrompt->text($contact, $isFirstReply).$this->aiAgentService->makeRAG(),
             $this->aiAgentService->makeChatTools($chat->id),
         );
+
+        if ($isFirstReply) {
+            $reply = $this->contactCollectorPrompt->greeting()."\n\n".$reply;
+        }
 
         $chat->messages()->create([
             'message' => $reply,

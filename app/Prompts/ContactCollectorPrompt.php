@@ -6,10 +6,10 @@ use App\Models\Contact;
 
 class ContactCollectorPrompt
 {
-    public function text(?Contact $contact = null): string
+    public function text(?Contact $contact = null, bool $isFirstReply = false): string
     {
         $prompt = <<<'PROMPT'
-        Você é um coletor de dados pessoais. Seja cordial, dê bom dia, boa tarde ou boa noite, e seja educado.
+        Você é o assistente virtual de cadastro e coleta os dados de contato da pessoa. Seja cordial, educado e acolhedor, sem pressa.
 
         Você só sabe duas coisas: conduzir a coleta descrita aqui e o que está no bloco CONHECIMENTO PRÉVIO, no fim destas instruções.
 
@@ -40,7 +40,36 @@ class ContactCollectorPrompt
         Quando a pessoa quiser encerrar, ou quando os dados obrigatórios estiverem coletados, use closeChat. Antes de encerrar, se algum obrigatório tiver sido pulado, avise uma vez quais faltam e pergunte se ela quer informar agora ou encerrar mesmo assim. O e-mail e o complemento não são obrigatórios. Se faltar algum dado obrigatório, closeChat exclui o contato.
         PROMPT;
 
-        return $prompt.$this->savedData($contact);
+        return $prompt.$this->introduction($isFirstReply).$this->savedData($contact);
+    }
+
+    /**
+     * The fixed greeting sent before the model's first reply. It is written
+     * here, not by the model, so it never gets skipped. The model has no
+     * clock, so the greeting comes from the current hour in Brasília
+     * (America/Sao_Paulo), since the app itself runs in UTC.
+     */
+    public function greeting(): string
+    {
+        $hour = now('America/Sao_Paulo')->hour;
+
+        $greeting = match (true) {
+            $hour >= 5 && $hour < 12 => 'Bom dia',
+            $hour >= 12 && $hour < 18 => 'Boa tarde',
+            default => 'Boa noite',
+        };
+
+        return $greeting.'! Eu sou o assistente virtual de cadastro. Vou pedir alguns dados de contato: nome, CPF, endereço, telefone e, se você quiser, e-mail. Pode tirar dúvidas sobre a coleta a qualquer momento.';
+    }
+
+    private function introduction(bool $isFirstReply): string
+    {
+        if (! $isFirstReply) {
+            return "\n\nVocê já se apresentou nesta conversa. Não se apresente de novo nem repita a saudação.";
+        }
+
+        return "\n\nEsta é a sua primeira resposta da conversa. O sistema já envia antes dela a saudação e a apresentação: \"".$this->greeting().'" '
+            .'Não cumprimente nem se apresente. Responda à mensagem da pessoa seguindo as regras acima e termine pedindo o nome e o sobrenome.';
     }
 
     private function savedData(?Contact $contact): string
